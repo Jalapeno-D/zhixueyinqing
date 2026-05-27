@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智学引擎 v3 — AI个性化学习状态与认知策略分析助手</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#7F77DD;--purple-light:#EEEDFE;--purple-mid:#534AB7;
+  --teal:#1D9E75;--teal-light:#E1F5EE;--teal-mid:#0F6E56;
+  --amber:#EF9F27;--amber-light:#FAEEDA;--amber-dark:#854F0B;
+  --red:#E24B4A;--red-light:#FCEBEB;
+  --blue:#378ADD;--blue-light:#E6F1FB;
+  --green:#639922;--green-light:#EAF3DE;
+  --gray:#888780;--gray-light:#F1EFE8;--gray-dark:#444441;
+  --bg:#f8f7ff;--card:#fff;--text:#2C2C2A;--text2:#5F5E5A;--text3:#888780;
+  --border:rgba(0,0,0,0.1);--radius:12px;--radius-sm:8px;
+}
+[data-theme="dark"] {
+  --purple:#9B93F0;--purple-light:#2A2650;--purple-mid:#7F77DD;
+  --teal:#3EC99E;--teal-light:#1A3A2E;--teal-mid:#1D9E75;
+  --amber:#F5B74A;--amber-light:#3D2E15;--amber-dark:#EF9F27;
+  --red:#EE6B6A;--red-light:#3A1C1C;
+  --blue:#5CA0E8;--blue-light:#1A2840;
+  --green:#80C126;--green-light:#1E2E0E;
+  --gray:#888780;--gray-light:#2C2C2A;--gray-dark:#AAA9A6;
+  --bg:#1A1A2E;--card:#242438;--text:#E4E4E2;--text2:#AAA9A6;--text3:#888780;
+  --border:rgba(255,255,255,0.12);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+.header{background:linear-gradient(135deg,#534AB7 0%,#7F77DD 50%,#1D9E75 100%);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(83,74,183,0.2)}
+.header-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{color:#fff;font-size:18px;font-weight:500;letter-spacing:1px}
+.logo-sub{color:rgba(255,255,255,0.7);font-size:12px}
+.header-tag{background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:11px;padding:2px 8px;border-radius:10px;margin-left:4px}
+.nav{display:flex;gap:3px;flex-wrap:wrap}
+.nav-btn{background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.85);padding:5px 12px;border-radius:20px;cursor:pointer;font-size:13px;transition:all .2s;white-space:nowrap}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,0.3);color:#fff}
+.main{max-width:1200px;margin:0 auto;padding:24px 24px 48px}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* === CARDS === */
+.card{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card-sub{font-size:13px;color:var(--text3);margin-bottom:16px}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-purple{background:var(--purple-light);color:var(--purple-mid)}
+.badge-teal{background:var(--teal-light);color:var(--teal-mid)}
+.badge-amber{background:var(--amber-light);color:var(--amber-dark)}
+.badge-red{background:var(--red-light);color:#A32D2D}
+.badge-blue{background:var(--blue-light);color:#0C447C}
+.badge-green{background:var(--green-light);color:#27500A}
+
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.metric-card{background:var(--gray-light);border-radius:var(--radius-sm);padding:16px;border:none}
+.metric-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.metric-value{font-size:26px;font-weight:500;line-height:1.2}
+.metric-change{font-size:12px;color:var(--text3);margin-top:4px}
+.metric-change.up{color:#27500A}
+.metric-change.down{color:#A32D2D}
+.metric-card.clickable{cursor:pointer;transition:box-shadow .2s}
+.metric-card.clickable:hover{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+
+/* === FORMS === */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.form-item{display:flex;flex-direction:column;gap:6px}
+.form-item label{font-size:13px;color:var(--text2);font-weight:500}
+.form-item input,.form-item select,.form-item textarea{
+  border:0.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 12px;font-size:14px;color:var(--text);background:var(--card);
+  outline:none;transition:border-color .2s;font-family:inherit;resize:vertical
+}
+.form-item input:focus,.form-item select:focus,.form-item textarea:focus{border-color:var(--purple)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn:hover{border-color:var(--purple);color:var(--purple-mid)}
+.btn-primary{background:var(--purple-mid);color:#fff;border-color:var(--purple-mid)}
+.btn-primary:hover{background:var(--purple);color:#fff}
+.btn-xs{padding:4px 10px;font-size:12px;border-radius:20px}
+.btn-group{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+
+.scale-item{margin-bottom:20px}
+.scale-label{font-size:13px;color:var(--text);margin-bottom:8px;font-weight:500}
+.scale-row{display:flex;align-items:center;gap:12px}
+.scale-row input[type=range]{flex:1;accent-color:var(--purple)}
+.scale-val{min-width:28px;text-align:center;font-size:14px;font-weight:500;color:var(--purple-mid)}
+.scale-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:2px}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 18px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-left:none;border-right:none;border-top:none}
+.tab:hover{color:var(--purple-mid)}
+.tab.active{color:var(--purple-mid);border-bottom-color:var(--purple-mid);font-weight:500}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.progress-bar{height:8px;background:#ece9fb;border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.progress-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.progress-row .pl{font-size:13px;color:var(--text);min-width:80px}
+.progress-row .pbar{flex:1}
+.progress-row .pv{font-size:13px;font-weight:500;min-width:36px;text-align:right}
+
+.insight{border-left:3px solid var(--purple);padding:12px 16px;background:var(--purple-light);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:12px}
+.insight.warn{border-color:var(--amber);background:var(--amber-light)}
+.insight.danger{border-color:var(--red);background:var(--red-light)}
+.insight.success{border-color:var(--teal);background:var(--teal-light)}
+.insight-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.insight-body{font-size:13px;color:var(--text2);line-height:1.6}
+
+.strategy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.strategy-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;transition:box-shadow .2s,transform .2s;cursor:pointer}
+.strategy-card:hover{box-shadow:0 4px 20px rgba(127,119,221,0.15);transform:translateY(-2px)}
+.strategy-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.strategy-card h3{font-size:14px;font-weight:500;margin-bottom:4px}
+.strategy-card p{font-size:13px;color:var(--text2);line-height:1.6}
+.strategy-meta{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+
+/* NEW: Strategy feedback */
+.strategy-feedback{margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.strategy-feedback .tried-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer}
+.strategy-feedback .tried-toggle input{accent-color:var(--purple-mid)}
+.stars{display:flex;gap:2px}
+.stars button{background:none;border:none;font-size:16px;cursor:pointer;color:#ddd;transition:color .2s}
+.stars button.active,.stars button:hover{color:#EF9F27}
+.feedback-saved{font-size:11px;color:var(--teal);display:none}
+
+.diary-entry{border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;cursor:pointer;transition:border-color .2s}
+.diary-entry:hover{border-color:var(--purple)}
+.diary-meta{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.diary-date{font-size:12px;color:var(--text3)}
+.diary-preview{font-size:13px;color:var(--text2);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.diary-ai{border-top:0.5px solid var(--border);margin-top:10px;padding-top:10px;display:flex;gap:8px;align-items:flex-start}
+.diary-ai-avatar{width:20px;height:20px;border-radius:50%;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.diary-ai-text{font-size:12px;color:var(--text2);line-height:1.5}
+
+.warning-block{background:var(--red-light);border:1px solid #F7C1C1;border-radius:var(--radius);padding:16px 20px;display:flex;gap:16px;align-items:flex-start}
+.warning-block h3{font-size:14px;font-weight:500;color:#A32D2D;margin-bottom:6px}
+.warning-block p{font-size:13px;color:#791F1F;line-height:1.6}
+.warning-block.medium{background:var(--amber-light);border-color:#FAC775}
+.warning-block.medium h3{color:var(--amber-dark)}
+.warning-block.medium p{color:#633806}
+.warning-block.ok{background:var(--teal-light);border-color:#9FE1CB}
+.warning-block.ok h3{color:var(--teal-mid)}
+.warning-block.ok p{color:var(--teal-mid)}
+
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--purple);border:2px solid #fff;box-shadow:0 0 0 1px var(--purple)}
+.tl-date{font-size:12px;color:var(--text3);margin-bottom:3px}
+.tl-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.tl-desc{font-size:13px;color:var(--text2)}
+
+.chart-wrap{position:relative;width:100%}
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;font-size:12px;color:var(--text2)}
+.chart-legend span{display:flex;align-items:center;gap:4px}
+.chart-legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){
+  .grid-2{grid-template-columns:1fr}
+  .pain-grid,.capa-grid{grid-template-columns:1fr}
+  .flow-steps{flex-direction:column;align-items:center;gap:8px}
+  .flow-arrow{transform:rotate(90deg)}
+  .innov-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .strategy-grid{grid-template-columns:1fr}
+  .metric-grid{grid-template-columns:1fr 1fr}
+  .landing-hero h1{font-size:24px}
+  .header-inner{padding:0 12px}
+  .hamburger-btn{display:inline-flex!important}
+  #main-nav .nav-btn:not(.active):not(.theme-toggle):not(.hamburger-btn){display:none}
+  #main-nav.open .nav-btn{display:inline-flex!important}
+  #main-nav.open{flex-direction:column;position:absolute;top:60px;right:12px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:200;gap:4px}
+  #main-nav.open .nav-btn{background:transparent;color:var(--text);padding:8px 16px;border-radius:8px;text-align:left;width:100%}
+  #main-nav.open .nav-btn:hover,#main-nav.open .nav-btn.active{background:var(--purple-light);color:var(--purple-mid)}
+  #main-nav.open .theme-toggle,#main-nav.open .hamburger-btn{display:none!important}
+}
+
+/* === LANDING === */
+.landing-hero{text-align:center;padding:48px 20px 40px;background:linear-gradient(135deg,var(--purple-light) 0%,#E1F5EE 100%);border-radius:var(--radius);margin-bottom:24px}
+.landing-hero h1{font-size:32px;font-weight:500;color:var(--purple-mid);margin-bottom:8px}
+.landing-hero .hero-subtitle{font-size:18px;color:var(--text2);margin-bottom:4px}
+.landing-hero p{font-size:14px;color:var(--text3);max-width:560px;margin:0 auto 20px}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-btns .btn{font-size:15px;padding:10px 24px}
+.pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.pain-card{text-align:center;background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:24px 16px}
+.pain-num{font-size:15px;font-weight:500;color:var(--purple-mid);margin-bottom:4px}
+.pain-title{font-size:14px;font-weight:500;margin-bottom:6px}
+.pain-desc{font-size:13px;color:var(--text2);line-height:1.5}
+.capa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.capa-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:20px 16px;text-align:center}
+.capa-icon{font-size:28px;margin-bottom:10px}
+.capa-card h3{font-size:14px;font-weight:500;margin-bottom:6px}
+.capa-card p{font-size:13px;color:var(--text2);line-height:1.5}
+.flow-steps{display:flex;justify-content:center;gap:0;flex-wrap:wrap;margin:20px 0}
+.flow-step{display:flex;align-items:center}
+.flow-node{background:var(--card);border:1.5px solid var(--purple);border-radius:20px;padding:6px 16px;font-size:13px;color:var(--purple-mid);font-weight:500;white-space:nowrap}
+.flow-arrow{font-size:16px;color:var(--text3);padding:0 8px}
+.innov-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.innov-col h3{font-size:14px;font-weight:500;margin-bottom:12px}
+.innov-item{display:flex;gap:10px;margin-bottom:14px;font-size:13px;line-height:1.6}
+.innov-dot{width:24px;height:24px;border-radius:50%;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;color:var(--purple-mid)}
+.innov-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bottom-cta{text-align:center;padding:32px;background:linear-gradient(135deg,var(--purple-light) 0%,#E1F5EE 100%);border-radius:var(--radius);margin-top:24px}
+.bottom-cta h2{font-size:20px;font-weight:500;color:var(--purple-mid);margin-bottom:8px}
+
+/* === CHAT === */
+.chat-container{max-width:640px;margin:0 auto}
+.chat-messages{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;min-height:300px;max-height:400px;overflow-y:auto}
+.chat-msg{display:flex;gap:10px;max-width:90%;animation:fadeIn .3s ease}
+.chat-msg.user{flex-direction:row-reverse;align-self:flex-end}
+.chat-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.chat-avatar.ai{background:var(--purple-light);color:var(--purple-mid)}
+.chat-avatar.user{background:#D3D1C7;color:var(--text)}
+.chat-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;max-width:100%}
+.chat-msg.ai .chat-bubble{background:var(--gray-light);color:var(--text);border-radius:4px 14px 14px 14px}
+.chat-msg.user .chat-bubble{background:var(--purple-mid);color:#fff;border-radius:14px 4px 14px 14px}
+.chat-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.chat-preset{padding:8px 16px;border:0.5px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;background:var(--card);color:var(--text);transition:all .2s}
+.chat-preset:hover{border-color:var(--purple);background:var(--purple-light);color:var(--purple-mid)}
+.chat-input-row{display:flex;gap:10px}
+.chat-input-row input{flex:1;border:0.5px solid var(--border);border-radius:20px;padding:10px 16px;font-size:14px;outline:none}
+.chat-input-row input:focus{border-color:var(--purple)}
+.chat-input-row button{border-radius:20px;padding:10px 20px}
+
+/* === MODAL === */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;transform:translateY(20px);transition:transform .3s}
+.modal.wide{max-width:680px}
+.modal-overlay.show .modal{transform:none}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:4px}
+
+/* === REPORT MODAL === */
+.report-section{margin-bottom:20px}
+.report-section h3{font-size:14px;font-weight:500;margin-bottom:8px;color:var(--purple-mid)}
+.report-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.report-stat{background:var(--gray-light);padding:12px;border-radius:var(--radius-sm)}
+.report-stat .rs-val{font-size:22px;font-weight:500;color:var(--purple-mid)}
+.report-stat .rs-label{font-size:12px;color:var(--text3)}
+.report-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-state .empty-icon{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:14px;line-height:1.8}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--purple-mid);color:#fff;padding:10px 24px;border-radius:24px;font-size:13px;z-index:300;animation:toastIn .3s ease,toastOut .3s ease 1.7s forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0}}
+
+/* DATA CONTROL */
+.data-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.data-badge{font-size:11px;color:var(--teal);background:var(--teal-light);padding:3px 10px;border-radius:12px;display:flex;align-items:center;gap:4px}
+.data-badge.warn{color:var(--amber-dark);background:var(--amber-light)}
+
+/* Gauge & extras */
+.gauge-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.gauge-labels{flex:1;min-width:160px}
+.gauge-label-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.gauge-bar{height:10px;background:#ece9fb;border-radius:5px;overflow:hidden;margin-bottom:4px}
+.gauge-fill{height:100%;border-radius:5px;transition:width .8s ease}
+.notif{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;vertical-align:middle;margin-left:4px}
+.section-title{font-size:18px;font-weight:500;color:var(--text);margin-bottom:8px}
+.section-sub{font-size:13px;color:var(--text3);margin-bottom:16px}
+.divider{border:none;border-top:0.5px solid var(--border);margin:20px 0}
+.flex{display:flex;align-items:center}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.gap-8{gap:8px}.gap-12{gap:12px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mt-8{margin-top:8px}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--purple-mid);margin:0 2px;animation:bounce .8s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
+
+/* Dark mode overrides for non-variable elements */
+[data-theme="dark"] .landing-hero{background:linear-gradient(135deg,#2A2650 0%,#1A3A2E 100%)}
+[data-theme="dark"] .bottom-cta{background:linear-gradient(135deg,#2A2650 0%,#1A3A2E 100%)}
+[data-theme="dark"] .flow-node{background:var(--card);border-color:var(--purple)}
+[data-theme="dark"] .metric-card{background:var(--gray-light)}
+[data-theme="dark"] .diary-entry{background:var(--card)}
+[data-theme="dark"] .modal{background:var(--card);color:var(--text)}
+[data-theme="dark"] .header{background:linear-gradient(135deg,#2A2650 0%,#3D3680 50%,#0F4E3D 100%)}
+[data-theme="dark"] .chat-msg.ai .chat-bubble{background:var(--gray-light)}
+[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2)}
+[data-theme="dark"] select,[data-theme="dark"] select option{background:var(--card);color:var(--text)}
+[data-theme="dark"] .tl-dot{border-color:var(--card)}
+[data-theme="dark"] input[type="range"]{accent-color:var(--purple)}
+[data-theme="dark"] .scale-val{color:var(--purple)}
+[data-theme="dark"] .stars button{color:#555}
+[data-theme="dark"] .stars button.active,[data-theme="dark"] .stars button:hover{color:#F5B74A}
+[data-theme="dark"] .warning-block.ok{background:#1A3A2E;border-color:#2A5A45}
+[data-theme="dark"] .warning-block.ok h3{color:var(--teal)}
+[data-theme="dark"] .warning-block.ok p{color:#9FE1CB}
+[data-theme="dark"] .progress-bar{background:#3D3D4A}
+[data-theme="dark"] div[style*="background:var(--gray-light)"]{background:#2C2C2A!important}
+
+/* PRINT */
+@media print{
+  body{background:#fff;color:#000}
+  .header,.nav,.btn,.btn-group,.chat-input-row,.chat-presets,.data-bar,.footer-actions,.hero-btns{display:none!important}
+  .main{padding:0;max-width:100%}
+  .card{border:1px solid #ccc;break-inside:avoid;box-shadow:none}
+  .page{display:block!important;page-break-after:always}
+  .page#page-home,.page#page-chat,.page#page-input,.page#page-strategy,.page#page-diary{display:none!important}
+  .modal-overlay{position:static;opacity:1;pointer-events:all}
+  .modal{border:1px solid #ccc;max-width:100%;transform:none}
+  .modal-overlay::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div class="logo-text">智学引擎</div>
+      <span class="header-tag">v3 · 动态数据</span>
+    </div>
+    <nav class="nav" id="main-nav">
+      <button class="nav-btn active" onclick="showPage('home')">首页</button>
+      <button class="nav-btn" onclick="showPage('dashboard')">学习看板</button>
+      <button class="nav-btn" onclick="showPage('analysis')">AI分析</button>
+      <button class="nav-btn" onclick="showPage('chat')">AI对话</button>
+      <button class="nav-btn" onclick="showPage('strategy')">策略推荐</button>
+      <button class="nav-btn" onclick="showPage('input')">数据录入</button>
+      <button class="nav-btn" onclick="showPage('diary')">学习日记</button>
+      <button class="nav-btn theme-toggle" onclick="toggleTheme()" title="切换深色/浅色模式" style="font-size:16px;padding:5px 10px" id="theme-btn">🌙</button>
+      <button class="nav-btn hamburger-btn" onclick="toggleMobileMenu()" style="display:none;font-size:18px;padding:5px 10px">☰</button>
+    </nav>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- ========== HOME ========== -->
+<div id="page-home" class="page active">
+  <div class="landing-hero">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px">
+      <span class="badge badge-teal">人机协同</span>
+      <span class="badge badge-purple">v3 · 动态数据驱动</span>
+      <span style="font-size:13px;color:var(--text3)">数据持久化 · 策略反馈 · 周报生成</span>
+    </div>
+    <h1>智学引擎</h1>
+    <div class="hero-subtitle">AI 个性化学习状态与认知策略分析助手</div>
+    <p>通过整合学习行为、心理量表、睡眠情绪等多维数据，构建个人学习画像，利用 AI 识别效率模式、预测倦怠风险，提供个性化认知策略干预。<strong>v3 实现数据持久化，关闭页面数据不丢失。</strong></p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" onclick="showPage('dashboard')">进入看板 →</button>
+      <button class="btn" onclick="showPage('input')">录入学习数据</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="text-align:center">学习中的三大痛点</div>
+  <div class="section-sub" style="text-align:center">每个学生都曾经历过这些困惑，却往往无从下手</div>
+  <div class="pain-grid">
+    <div class="pain-card"><div class="pain-num">痛点一</div><div class="pain-title">状态不可知</div><div class="pain-desc">学习效率忽高忽低，却找不到原因。不知道自己什么时候状态最好、什么时候该休息。</div></div>
+    <div class="pain-card"><div class="pain-num">痛点二</div><div class="pain-title">策略不匹配</div><div class="pain-desc">别人有效的方法，自己用却不合适。盲目模仿学霸的学习方法，事倍功半。</div></div>
+    <div class="pain-card"><div class="pain-num">痛点三</div><div class="pain-title">倦怠无预警</div><div class="pain-desc">学不下去时才意识到已过度消耗。缺乏疲劳预警机制，直到精疲力竭才被动停摆。</div></div>
+  </div>
+
+  <div class="section-title" style="text-align:center">四大核心能力</div>
+  <div class="section-sub" style="text-align:center">数据采集 → 模式识别 → 策略推荐 → 反馈优化，完整闭环</div>
+  <div class="capa-grid">
+    <div class="capa-card" style="border-top:3px solid var(--purple)"><div class="capa-icon">📊</div><h3>多维数据采集</h3><p>整合学习行为、心理量表、睡眠情绪等多源数据，构建全面学习画像</p></div>
+    <div class="capa-card" style="border-top:3px solid var(--teal)"><div class="capa-icon">🤖</div><h3>AI 模式识别</h3><p>机器学习识别学习效率模式，预测倦怠风险，从静态记录走向动态分析</p></div>
+    <div class="capa-card" style="border-top:3px solid var(--blue)"><div class="capa-icon">🎯</div><h3>策略精准推荐</h3><p>基于人机协同，AI 分析生成建议，专家设计策略库，兼顾智能与科学</p></div>
+    <div class="capa-card" style="border-top:3px solid var(--amber)"><div class="capa-icon">📈</div><h3>可视化看板</h3><p>学习状态仪表盘实时呈现，数据可解释，决策有依据</p></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title" style="text-align:center">闭环学习支持机制</div>
+    <div class="section-sub" style="text-align:center">从数据采集到策略优化的完整闭环（v3 已实现全部环节的数据流转）</div>
+    <div class="flow-steps">
+      <div class="flow-step"><div class="flow-node">① 数据采集</div></div>
+      <div class="flow-step"><div class="flow-arrow">→</div><div class="flow-node">② 状态识别</div></div>
+      <div class="flow-step"><div class="flow-arrow">→</div><div class="flow-node">③ 策略干预</div></div>
+      <div class="flow-step"><div class="flow-arrow">→</div><div class="flow-node">④ 反馈优化</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;font-size:12px;color:var(--text3);text-align:center">
+      <div>学习行为 / 心理量表 / 睡眠情绪</div>
+      <div>模式分类 / 效率预测 / 倦怠预警</div>
+      <div>个性化推荐 / 认知策略 / 时间安排</div>
+      <div><strong style="color:var(--teal)">策略评分 / 效果追踪 / 持续改进</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">创新之处</div>
+    <div class="innov-grid">
+      <div class="innov-col">
+        <div class="innov-item"><div class="innov-dot">1</div><div>突破传统单一时间记录，将<strong>学习行为 + 心理状态 + 生活因素</strong>融合建模</div></div>
+        <div class="innov-item"><div class="innov-dot">2</div><div>引入模式识别与效率趋势预测，由<strong>静态记录转向动态分析</strong></div></div>
+        <div class="innov-item"><div class="innov-dot">3</div><div>构建<strong>人机协同策略推荐</strong>机制 — AI 分析 + 专家策略库，v3 新增策略效果追踪</div></div>
+      </div>
+      <div class="innov-col">
+        <div class="innov-stats">
+          <div class="metric-card"><div class="metric-value" style="color:var(--purple-mid);font-size:32px">6+</div><div class="metric-label">数据维度</div></div>
+          <div class="metric-card"><div class="metric-value" style="color:var(--teal);font-size:32px">6</div><div class="metric-label">策略类型</div></div>
+          <div class="metric-card"><div class="metric-value" style="color:var(--blue);font-size:32px">24h</div><div class="metric-label">效率预测</div></div>
+          <div class="metric-card"><div class="metric-value" style="color:var(--amber);font-size:32px">实时</div><div class="metric-label">倦怠预警</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-cta">
+    <h2>开始你的智能学习之旅</h2>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">录入学习数据，让 AI 帮你发现隐藏的学习模式，获取专属认知策略。v3 支持数据持久化，刷新不丢失。</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" onclick="showPage('input')">录入数据 →</button>
+      <button class="btn" onclick="showPage('dashboard')">查看看板</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DASHBOARD ========== -->
+<div id="page-dashboard" class="page">
+  <div class="card-title" style="font-size:18px;margin-bottom:4px">学习看板</div>
+  <div class="card-sub">实时监控你的学习状态与效率趋势（基于真实录入的数据动态计算）</div>
+
+  <!-- Dynamic metric cards -->
+  <div class="metric-grid" id="dash-metrics">
+    <div class="metric-card clickable" onclick="showPage('input')">
+      <div class="metric-label">今日学习时长</div>
+      <div class="metric-value" style="color:var(--purple-mid)" id="metric-hours">0h</div>
+      <div class="metric-change" id="metric-hours-delta">尚未录入数据</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">综合效率评分</div>
+      <div class="metric-value" style="color:var(--teal)" id="metric-efficiency">--</div>
+      <div class="metric-change" id="metric-eff-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">连续学习天数</div>
+      <div class="metric-value" style="color:var(--blue)" id="metric-streak">0天</div>
+      <div class="metric-change" id="metric-streak-sub">开始记录第一天的数据吧</div>
+    </div>
+    <div class="metric-card" onclick="showPage('analysis')" style="cursor:pointer">
+      <div class="metric-label">倦怠风险等级</div>
+      <div class="metric-value" style="color:var(--amber)" id="metric-burnout">--</div>
+      <div class="metric-change" id="metric-burnout-sub">数据不足</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📈 学习趋势</div>
+      <div class="card-sub" id="trend-sub">近7天学习时长与效率变化</div>
+      <div class="chart-legend"><span><i style="background:#7F77DD"></i> 效率得分</span><span><i style="background:rgba(29,158,117,0.4)"></i> 学习时长</span></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chart-trend" role="img" aria-label="学习趋势图"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 学科分布</div>
+      <div class="card-sub" id="subject-sub">本周学习时间占比</div>
+      <div class="chart-legend" id="subject-legend"></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chart-subjects" role="img" aria-label="学科分布环形图"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔍 倦怠风险分析</div>
+    <div class="card-sub">各因素对倦怠风险的贡献度评估</div>
+    <div class="chart-wrap" style="height:180px"><canvas id="chart-burnout-factors" role="img" aria-label="倦怠风险因素贡献图"></canvas></div>
+  </div>
+
+  <!-- NEW: Strategy tracking -->
+  <div class="card">
+    <div class="card-title">📋 策略效果追踪</div>
+    <div class="card-sub" id="strategy-track-sub">记录每种策略的尝试与效果反馈，形成优化闭环</div>
+    <div id="strategy-tracking"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧠 AI 洞察</div>
+    <div class="card-sub">基于近期学习数据的智能分析</div>
+    <div id="dash-insights"></div>
+  </div>
+
+  <!-- NEW: Weekly report -->
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="generateReport()">📄 生成学习周报</button>
+    <button class="btn" onclick="exportData()">📥 导出全部数据 (JSON)</button>
+    <button class="btn" style="color:var(--red)" onclick="resetData()">🗑 重置数据</button>
+  </div>
+</div>
+
+<!-- ========== ANALYSIS (unchanged) ========== -->
+<div id="page-analysis" class="page">
+  <div class="card-title" style="font-size:18px;margin-bottom:4px">AI 学习分析</div>
+  <div class="card-sub">基于多维数据的学习模式识别与效率预测</div>
+  <div class="card">
+    <div class="card-title">🔬 学习模式识别</div>
+    <div class="card-sub">基于近14天数据识别你的学习风格</div>
+    <div class="strategy-grid">
+      <div class="strategy-card" style="border-color:var(--purple);border-width:2px"><div class="strategy-icon" style="background:var(--purple-light)">🌅</div><h3>晨间高效型</h3><p>你的认知资源在上午 9-11 点达到峰值，适合安排高难度学习任务</p><div class="strategy-meta"><span class="badge badge-purple">深度专注</span><span class="badge badge-teal">节奏稳定</span><span class="badge badge-amber">午后低谷</span></div></div>
+      <div class="strategy-card"><div class="strategy-icon" style="background:var(--teal-light)">⏰</div><h3>高效时段</h3><p>9:00–11:00, 21:00 效率 ≥ 75</p><div class="strategy-meta"><span class="badge badge-teal">峰值 87 分</span></div></div>
+      <div class="strategy-card"><div class="strategy-icon" style="background:var(--amber-light)">📉</div><h3>低效时段</h3><p>13:00, 18:00 效率 < 50</p><div class="strategy-meta"><span class="badge badge-amber">低谷 42 分</span></div></div>
+    </div>
+    <hr class="divider">
+    <div class="card-title" style="margin-bottom:12px">📈 24小时效率预测</div>
+    <div class="card-sub">AI 预测今日各时段的认知效率曲线</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="chart-predict" role="img" aria-label="24小时效率预测曲线"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚠️ 倦怠预警</div>
+    <div class="warning-block medium"><div style="font-size:24px;flex-shrink:0">⚠️</div><div><h3>中等风险 — 风险评分 62/100（上升中）</h3><div class="chart-wrap" style="height:160px;margin:12px 0"><canvas id="chart-burnout-trend" role="img" aria-label="倦怠趋势图"></canvas></div></div></div>
+    <div class="metric-grid" style="margin-top:16px">
+      <div class="metric-card" style="border-left:3px solid var(--red)"><div class="metric-label" style="color:#A32D2D">主要影响 · 高</div><div class="metric-value" style="font-size:16px;color:var(--text)">连续高强度学习 > 5 天</div></div>
+      <div class="metric-card" style="border-left:3px solid var(--amber)"><div class="metric-label" style="color:var(--amber-dark)">主要影响 · 中</div><div class="metric-value" style="font-size:16px;color:var(--text)">睡眠不足 7 小时</div></div>
+      <div class="metric-card" style="border-left:3px solid var(--amber)"><div class="metric-label" style="color:var(--amber-dark)">主要影响 · 中</div><div class="metric-value" style="font-size:16px;color:var(--text)">情绪波动增大</div></div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="insight success"><div class="insight-title">AI 建议 ①</div><div class="insight-body">今日安排 1-2 小时轻松复习，避免高强度新内容学习。</div></div>
+      <div class="insight"><div class="insight-title">AI 建议 ②</div><div class="insight-body">今晚保证 7.5 小时以上睡眠，22:30 前入睡。</div></div>
+      <div class="insight"><div class="insight-title">AI 建议 ③</div><div class="insight-body">适当进行户外散步 20 分钟，恢复认知资源。</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">💭 情绪变化趋势</div>
+    <div class="card-sub">基于日记与量表数据的情感分析</div>
+    <div class="chart-legend"><span><i style="background:#1D9E75"></i> 积极</span><span><i style="background:#7F77DD"></i> 中性</span><span><i style="background:#E24B4A"></i> 消极</span></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="chart-mood" role="img" aria-label="情绪趋势图"></canvas></div>
+  </div>
+</div>
+
+<!-- ========== CHAT (unchanged) ========== -->
+<div id="page-chat" class="page">
+  <div class="chat-container">
+    <div class="card-title" style="font-size:18px;margin-bottom:4px">AI 学习助手</div>
+    <div class="card-sub">与 AI 对话，获取个性化学习分析与策略建议</div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-msg ai"><div class="chat-avatar ai">🤖</div><div class="chat-bubble"><strong>你好，我是智学引擎 AI 助手 👋</strong><br><br>我可以帮你：<br>• 分析学习状态，诊断"学不进去"的原因<br>• 识别学习模式，发现最适合你的学习节奏<br>• 预测倦怠风险，提前给出预防建议<br>• 推荐个性化认知策略，匹配你的学习风格<br><br><em style="font-size:12px;color:var(--text3)">试试下面的问题，或直接输入你想咨询的内容</em></div></div>
+      </div>
+      <div class="chat-presets">
+        <button class="chat-preset" onclick="sendPreset('我最近总是学不进去，怎么办？')">我最近学不进去，怎么办？</button>
+        <button class="chat-preset" onclick="sendPreset('帮我分析一下我的学习模式')">帮我分析学习模式</button>
+        <button class="chat-preset" onclick="sendPreset('如何预防学习倦怠？')">如何预防倦怠？</button>
+        <button class="chat-preset" onclick="sendPreset('考试焦虑怎么缓解？')">考试焦虑怎么缓解？</button>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STRATEGY ========== -->
+<div id="page-strategy" class="page">
+  <div class="card-title" style="font-size:18px;margin-bottom:4px">策略推荐</div>
+  <div class="card-sub">基于你的学习模式与状态，AI 为你精选个性化认知策略 — v3 新增效果反馈功能</div>
+
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-value" style="color:var(--purple-mid)">6</div><div class="metric-label">推荐策略数</div></div>
+    <div class="metric-card"><div class="metric-value" style="color:var(--amber)">3</div><div class="metric-label">高优先级</div></div>
+    <div class="metric-card" style="grid-column:span 2"><div class="metric-label">策略来源</div><div class="metric-value" style="font-size:14px;color:var(--text)">AI 分析 + 专家策略库</div></div>
+  </div>
+
+  <div class="strategy-grid" id="strategy-list">
+    <!-- Strategy cards generated by JS with feedback support -->
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">📅 个性化时间安排建议</div>
+    <div class="card-sub">基于你的效率模式生成的明日学习计划</div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-dot" style="background:#7F77DD"></div><div class="tl-date">09:00 – 11:30 | 效率峰值</div><div class="tl-title">深度学习 · 数学 / 专业课</div><div class="tl-desc">安排最难任务，搭配番茄工作法 2-3 轮。该时段专注度可达 83 分。</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:#1D9E75"></div><div class="tl-date">13:00 – 15:00 | 低谷期</div><div class="tl-title">轻度任务 · 英语单词 / 阅读</div><div class="tl-desc">利用间隔重复工具复习单词，避免强制高强度学习。</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:#378ADD"></div><div class="tl-date">15:00 – 17:30 | 恢复期</div><div class="tl-title">中等强度 · 编程练习 / 做题</div><div class="tl-desc">适合有挑战但不需极高专注度的任务。</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:#EF9F27"></div><div class="tl-date">19:00 – 21:00 | 晚间</div><div class="tl-title">整理复习 · 费曼技巧输出</div><div class="tl-desc">用费曼学习法复述当天知识，输出型巩固。</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:#E24B4A"></div><div class="tl-date">22:00 | 睡前</div><div class="tl-title">放松收尾 · 明日计划</div><div class="tl-desc">不做新知识学习。冥想 5 分钟，保障 7.5 小时睡眠。</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== INPUT ========== -->
+<div id="page-input" class="page">
+  <div class="card-title" style="font-size:18px;margin-bottom:4px">数据录入</div>
+  <div class="card-sub">记录你的学习行为、心理状态与生活数据，数据将自动保存到本地</div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'tab-study')">学习数据</button>
+      <button class="tab" onclick="switchTab(this,'tab-scale')">心理量表</button>
+      <button class="tab" onclick="switchTab(this,'tab-sleep')">睡眠与情绪</button>
+      <button class="tab" onclick="switchTab(this,'tab-life')">生活事件</button>
+    </div>
+
+    <div id="tab-study" class="tab-content active">
+      <div class="card-sub" style="margin-top:8px">今日学习数据 — 可自由录入多条</div>
+      <div class="form-grid">
+        <div class="form-item"><label>日期</label><input type="date" id="study-date"></div>
+        <div class="form-item"><label>学习时长（小时）</label><input type="number" id="study-hours" min="0.5" step="0.5" placeholder="如 2.5"></div>
+        <div class="form-item"><label>学习科目</label><select id="subject" onchange="onSubjectChange()"><option value="">选择科目</option><option>高等数学</option><option>英语</option><option>专业课</option><option>政治</option><option>编程</option><option>心理学</option><option>统计学</option><option>研究方法</option><option>论文写作</option><option>实验设计</option><option value="__custom__">其他（自定义）</option></select><input type="text" id="subject-custom" placeholder="输入自定义科目名称" style="display:none;margin-top:6px"></div>
+        <div class="form-item"><label>学习类型</label><select id="study-type"><option value="">选择类型</option><option>精读/深度学习</option><option>听课/视频</option><option>练习/刷题</option><option>复习/巩固</option><option>写作/输出</option></select></div>
+        <div class="form-item"><label>任务完成比例</label><div class="scale-row"><input type="range" id="completion" min="0" max="100" value="60" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="scale-val">60%</span></div></div>
+        <div class="form-item"><label>学习目标</label><input type="text" id="study-goal" placeholder="例：完成第三章习题"></div>
+      </div>
+      <div class="btn-group"><button class="btn btn-primary" onclick="saveStudy()">➕ 添加</button><span style="font-size:12px;color:var(--text3);margin-left:10px;align-self:center">可反复添加多条记录</span></div>
+      <hr class="divider" style="margin-top:20px">
+      <div class="card-title" style="margin-bottom:8px">📋 今日已录入记录</div>
+      <div class="card-sub">点击 ✕ 可删除单条记录</div>
+      <div id="study-list" style="max-height:360px;overflow-y:auto"></div>
+    </div>
+
+    <div id="tab-scale" class="tab-content">
+      <div class="card-sub" style="margin-top:8px">心理健康量表测评（结果会自动保存）</div>
+      <div style="margin-bottom:16px">
+        <span class="badge badge-purple" style="cursor:pointer;padding:6px 14px" onclick="switchScaleTab('pss')">压力感知 PSS</span>
+        <span class="badge badge-teal" style="cursor:pointer;padding:6px 14px;margin-left:8px" onclick="switchScaleTab('swls')">生活满意度 SWLS</span>
+        <span class="badge badge-amber" style="cursor:pointer;padding:6px 14px;margin-left:8px" onclick="switchScaleTab('mas')">学习焦虑 MAS</span>
+      </div>
+      <div id="scale-pss" class="scale-content"><div class="insight mb-8"><div class="insight-title">PSS-10 压力感知量表（0=从不，4=非常频繁）</div></div><div id="pss-questions"></div><div class="btn-group mb-16"><button class="btn btn-primary" onclick="calcPSS()">计算得分并保存</button></div><div id="pss-result" style="display:none"></div></div>
+      <div id="scale-swls" class="scale-content" style="display:none"><div class="insight mb-8"><div class="insight-title">SWLS 生活满意度（1=强烈不同意，7=强烈同意）</div></div><div id="swls-questions"></div><div class="btn-group mb-16"><button class="btn btn-primary" onclick="calcSWLS()">计算得分并保存</button></div><div id="swls-result" style="display:none"></div></div>
+      <div id="scale-mas" class="scale-content" style="display:none"><div class="insight mb-8"><div class="insight-title">MAS 学习焦虑（1=完全不符合，5=完全符合）</div></div><div id="mas-questions"></div><div class="btn-group mb-16"><button class="btn btn-primary" onclick="calcMAS()">计算得分并保存</button></div><div id="mas-result" style="display:none"></div></div>
+    </div>
+
+    <div id="tab-sleep" class="tab-content">
+      <div class="card-sub" style="margin-top:8px">睡眠与情绪状态</div>
+      <div class="form-grid">
+        <div class="form-item"><label>昨晚睡眠时长（小时）</label><input type="number" id="sleep-hours" value="7" min="1" max="12" step="0.5"></div>
+        <div class="form-item"><label>睡眠质量</label><select id="sleep-quality"><option>很好</option><option>较好</option><option selected>一般</option><option>较差</option><option>很差</option></select></div>
+        <div class="form-item"><label>今日运动量</label><select id="exercise"><option>无运动</option><option selected>轻度</option><option>中等</option><option>高强度</option></select></div>
+      </div>
+      <div class="scale-item"><div class="scale-label">今日情绪状态（1=很糟糕，10=很棒）</div><div class="scale-row"><input type="range" id="mood" min="1" max="10" value="6" oninput="document.getElementById('mood-val').textContent=this.value"><span class="scale-val" id="mood-val">6</span></div></div>
+      <div class="scale-item"><div class="scale-label">身体疲劳感（1=精力充沛，10=极度疲惫）</div><div class="scale-row"><input type="range" id="fatigue" min="1" max="10" value="5" oninput="this.nextElementSibling.textContent=this.value"><span class="scale-val">5</span></div></div>
+      <div class="btn-group"><button class="btn btn-primary" onclick="saveLiving()">💾 保存状态</button></div>
+    </div>
+
+    <div id="tab-life" class="tab-content">
+      <div class="card-sub" style="margin-top:8px">近期生活事件</div>
+      <div class="form-item mb-16"><label>近期是否有重大生活事件？</label><select id="life-event"><option>无</option><option>考试/考核压力</option><option>人际关系问题</option><option>家庭变故</option><option>其他压力源</option></select></div>
+      <div class="form-item mb-16"><label>是否有身体不适？</label><select id="health-issue"><option>无</option><option>感冒/发热</option><option>慢性疲劳</option><option>其他不适</option></select></div>
+      <div class="form-item mb-16"><label>备注</label><textarea id="life-note" rows="3" placeholder="其他需要记录的信息..."></textarea></div>
+      <div class="btn-group"><button class="btn btn-primary" onclick="saveLife()">💾 保存</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DIARY ========== -->
+<div id="page-diary" class="page">
+  <div class="card-title" style="font-size:18px;margin-bottom:4px">学习日记</div>
+  <div class="card-sub">自由记录学习感受与思考，补充量化数据无法覆盖的个体差异</div>
+
+  <div class="card">
+    <div class="form-item mb-12">
+      <label>今天的心情</label>
+      <div style="display:flex;gap:10px;margin-top:6px" id="mood-picker">
+        <button class="mood-btn" data-mood="😊" onclick="pickMood(this)" style="font-size:22px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer">😊</button>
+        <button class="mood-btn" data-mood="😐" onclick="pickMood(this)" style="font-size:22px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer">😐</button>
+        <button class="mood-btn" data-mood="😔" onclick="pickMood(this)" style="font-size:22px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer">😔</button>
+        <button class="mood-btn" data-mood="😤" onclick="pickMood(this)" style="font-size:22px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer">😤</button>
+        <button class="mood-btn" data-mood="😴" onclick="pickMood(this)" style="font-size:22px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer">😴</button>
+      </div>
+    </div>
+    <div class="form-item mb-12"><label>今日日记</label><textarea id="diary-text" rows="5" placeholder="自由书写今天的学习感受、困惑、突破或任何想记录的事..."></textarea></div>
+    <div class="form-item mb-16"><label>话题标签（逗号分隔）</label><input type="text" id="diary-tags" placeholder="例如：数学, 焦虑, 突破"></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveDiary()">✍ 写日记</button>
+      <button class="btn" onclick="aiAnalyzeDiary()">🤖 AI 分析</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📓 历史记录</div>
+    <div id="diary-history"></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- STRATEGY MODAL -->
+<div class="modal-overlay" id="strategy-modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><div class="card-title" id="modal-title"></div><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- WEEKLY REPORT MODAL -->
+<div class="modal-overlay" id="report-modal" onclick="closeReportModal()">
+  <div class="modal wide" onclick="event.stopPropagation()" id="report-content">
+    <!-- Generated dynamically -->
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  STORAGE ENGINE
+// ============================================================
+const STORAGE_KEY = 'zhixue_engine_data';
+const DEFAULT_DATA = {
+  studyRecords: [],
+  scaleResults: [],
+  livingStates: [],
+  lifeEvents: [],
+  diaryEntries: [],
+  strategyFeedback: {}
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    const data = JSON.parse(raw);
+    // Merge with defaults for forward compatibility
+    const merged = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    for (const key of Object.keys(merged)) {
+      if (data[key] !== undefined) merged[key] = data[key];
+    }
+    return merged;
+  } catch(e) {
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {
+    showToast('存储空间不足，请清理部分数据');
+  }
+}
+
+function getToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDateLabel(dateStr) {
+  const d = new Date(dateStr);
+  const days = ['周日','周一','周二','周三','周四','周五','周六'];
+  return `${d.getMonth()+1}/${d.getDate()} ${days[d.getDay()]}`;
+}
+
+function daysBetween(d1, d2) {
+  return Math.round((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24));
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// ============================================================
+//  STRATEGY DATA
+// ============================================================
+const strategyCards = [
+  {icon:'🍅',iconBg:'var(--purple-light)',title:'番茄工作法 + 微休息',desc:'适合长时间学习时保持专注，防止疲劳积累',tags:[{t:'时间管理 · 优先',c:'badge-purple'},{t:'⭑ 简单',c:'badge-teal'}],border:'var(--purple)'},
+  {icon:'🔄',iconBg:'var(--teal-light)',title:'主动回忆 + 间隔复习',desc:'适合需要长期记忆的知识点，如英语单词、专业概念',tags:[{t:'记忆策略 · 优先',c:'badge-teal'},{t:'⭑⭑ 中等',c:'badge-amber'}]},
+  {icon:'⏰',iconBg:'var(--amber-light)',title:'高效时段任务匹配',desc:'基于你的效率曲线，在正确的时间做正确的学习任务',tags:[{t:'学习规划 · 优先',c:'badge-amber'},{t:'⭑ 简单',c:'badge-teal'}],border:'var(--amber)'},
+  {icon:'🧘',iconBg:'var(--blue-light)',title:'情绪调节学习法',desc:'当检测到情绪波动较大时，调整学习节奏与内容',tags:[{t:'情绪管理',c:'badge-blue'},{t:'⭑⭑ 中等',c:'badge-amber'}]},
+  {icon:'📚',iconBg:'var(--red-light)',title:'费曼学习法',desc:'适合理解复杂概念和逻辑关系，以教代学',tags:[{t:'深度理解',c:'badge-red'},{t:'⭑⭑⭑ 进阶',c:'badge-red'}]},
+  {icon:'😴',iconBg:'var(--green-light)',title:'睡眠-学习节奏优化',desc:'当睡眠数据不足或节律紊乱时推荐，科学调节学习节奏',tags:[{t:'生理节律',c:'badge-green'},{t:'⭑⭑ 中等',c:'badge-amber'}]}
+];
+
+const strategyDetails = [
+  {title:'🍅 番茄工作法 + 微休息',body:`<div class="insight success mb-16"><div class="insight-title">适用场景</div><div class="insight-body">长时间学习时保持专注，防止疲劳积累。你的专注持续时间均值约22分钟，25分钟的番茄节奏刚好略超舒适区，有助于逐步延长专注时间。</div></div><div class="timeline"><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">设定任务</div><div class="tl-desc">明确一个25分钟内可完成的具体小目标</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">专注25分钟</div><div class="tl-desc">关闭手机通知，全力投入</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">休息5分钟</div><div class="tl-desc">起身走动、喝水，完全离开学习材料</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">每4个番茄</div><div class="tl-desc">长休息15-30分钟，恢复认知资源</div></div></div>`},
+  {title:'🔄 主动回忆 + 间隔复习',body:`<div class="insight mb-16"><div class="insight-title">核心原理</div><div class="insight-body">学习后1天遗忘约60%，在遗忘发生前复习可将记忆巩固到90%+。主动回忆比被动浏览记忆效果高2-3倍。</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"><div class="metric-card"><div class="metric-label">第1次复习</div><div class="metric-value" style="font-size:20px;color:var(--purple-mid)">1天后</div></div><div class="metric-card"><div class="metric-label">第2次复习</div><div class="metric-value" style="font-size:20px;color:var(--teal)">3天后</div></div><div class="metric-card"><div class="metric-label">第3次复习</div><div class="metric-value" style="font-size:20px;color:var(--blue)">7天后</div></div><div class="metric-card"><div class="metric-label">第4次复习</div><div class="metric-value" style="font-size:20px;color:var(--amber)">21天后</div></div></div>`},
+  {title:'⏰ 高效时段任务匹配',body:`<div class="insight success mb-16"><div class="insight-title">你的效率节奏</div><div class="insight-body">你的认知峰值在 9:00-11:00（87分），低谷在 13:00-14:00（42分），晚间有所回升至 75 分。</div></div><p style="font-size:13px;line-height:1.6">学习方法：</p><ul style="font-size:13px;line-height:1.6;padding-left:20px"><li>峰值期安排最难、最需专注的任务</li><li>低谷期安排轻松复习或整理笔记</li><li>恢复期安排中等难度的练习</li><li>不要在低效时段强迫高强度学习</li></ul>`},
+  {title:'🧘 情绪调节学习法',body:`<div class="insight mb-16"><div class="insight-title">情绪对学习的影响</div><div class="insight-body">中等程度的积极情绪促进认知灵活性和创造力；而焦虑和压力会占用工作记忆资源，降低学习效率。</div></div><div class="timeline"><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">情绪识别</div><div class="tl-desc">开始学习前快速扫描自己的情绪状态</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">匹配策略</div><div class="tl-desc">积极→攻克难题 / 焦虑→规律性任务 / 疲惫→轻度复习</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">快速调节</div><div class="tl-desc">4-7-8 呼吸法：吸气4秒 → 屏息7秒 → 呼气8秒，3组即可平复焦虑</div></div></div>`},
+  {title:'📚 费曼学习法',body:`<div class="insight success mb-16"><div class="insight-title">核心思想</div><div class="insight-body">如果你不能简单地解释它，说明你还没真正理解它。——理查德·费曼</div></div><div class="timeline"><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">选概念</div><div class="tl-desc">写下要学习的概念名称</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">向孩子解释</div><div class="tl-desc">用最简单的语言，假装向10岁小孩解释</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">发现盲点</div><div class="tl-desc">卡壳的地方就是你不懂的地方，回去重学</div></div><div class="tl-item"><div class="tl-dot"></div><div class="tl-title">简化类比</div><div class="tl-desc">用类比让解释更流畅，形成长期记忆</div></div></div>`},
+  {title:'😴 睡眠-学习节奏优化',body:`<div class="insight mb-16"><div class="insight-title">为什么睡眠重要</div><div class="insight-body">睡眠是记忆巩固的关键时段。深度睡眠时海马体与新皮层之间的对话将日间学习转化为长期记忆。</div></div><p style="font-size:13px;line-height:1.6">优化建议：</p><ul style="font-size:13px;line-height:1.6;padding-left:20px"><li>目标睡眠 7.5h（5个完整睡眠周期）</li><li>睡前1h 不开新知识，做复习或日记</li><li>睡前远离手机蓝光，可冥想5分钟</li><li>如果睡眠不足，白天用15-20分钟小睡补偿</li></ul>`}
+];
+
+// ============================================================
+//  NAVIGATION
+// ============================================================
+const pageOrder = ['home','dashboard','analysis','chat','strategy','input','diary'];
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const page = document.getElementById('page-'+id);
+  if(page) page.classList.add('active');
+  const idx = pageOrder.indexOf(id);
+  if(idx>=0) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if(id==='dashboard') setTimeout(refreshDashboard,50);
+  if(id==='analysis') setTimeout(initAnalysisCharts,50);
+  if(id==='strategy') setTimeout(renderStrategyCards,50);
+  if(id==='diary') setTimeout(renderDiaryHistory,50);
+  if(id==='input') { setTimeout(renderAllScales,50); setTimeout(renderStudyList,50); }
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? '' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  document.getElementById('theme-btn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('zhixue_theme', newTheme);
+}
+
+function toggleMobileMenu() {
+  document.getElementById('main-nav').classList.toggle('open');
+}
+
+// 关闭汉堡菜单：点击页面其他地方
+document.addEventListener('click', function(e) {
+  const nav = document.getElementById('main-nav');
+  if (nav.classList.contains('open') && !nav.contains(e.target) && !e.target.classList.contains('hamburger-btn')) {
+    nav.classList.remove('open');
+  }
+});
+
+// 初始化主题
+(function initTheme() {
+  const saved = localStorage.getItem('zhixue_theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = '☀️';
+  }
+})();
+
+function switchTab(btn, id) {
+  const card = btn.closest('.card');
+  card.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  card.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// ============================================================
+//  STRATEGY CARDS WITH FEEDBACK
+// ============================================================
+function renderStrategyCards() {
+  const data = loadData();
+  const fb = data.strategyFeedback || {};
+  const container = document.getElementById('strategy-list');
+  container.innerHTML = strategyCards.map((s,i) => {
+    const f = fb[i] || {tried: false, rating: 0};
+    const starsHTML = Array.from({length:5}, (_,j) => 
+      `<button class="${j < f.rating ? 'active' : ''}" onclick="event.stopPropagation();rateStrategy(${i},${j+1})" title="${j+1}星">★</button>`
+    ).join('');
+    const savedClass = f.rating > 0 ? '' : '';
+    return `<div class="strategy-card" onclick="showStrategy(${i})" style="${s.border ? 'border-color:'+s.border+';border-width:2px' : ''}">
+      <div class="strategy-icon" style="background:${s.iconBg}">${s.icon}</div>
+      <h3>${s.title}</h3>
+      <p>${s.desc}</p>
+      <div class="strategy-meta">
+        ${s.tags.map(t=>`<span class="badge ${t.c}">${t.t}</span>`).join('')}
+      </div>
+      <div class="strategy-feedback">
+        <label class="tried-toggle">
+          <input type="checkbox" ${f.tried ? 'checked' : ''} onchange="toggleTried(${i},this.checked)">
+          <span>已尝试</span>
+        </label>
+        <span style="font-size:12px;color:var(--text3)">效果评价:</span>
+        <div class="stars">${starsHTML}</div>
+        <span class="feedback-saved" id="fb-saved-${i}" style="${f.rating > 0 ? 'display:inline' : ''}">已记录</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTried(idx, val) {
+  const data = loadData();
+  if (!data.strategyFeedback[idx]) data.strategyFeedback[idx] = {tried: false, rating: 0};
+  data.strategyFeedback[idx].tried = val;
+  saveData(data);
+  showToast(val ? '已标记为"已尝试" ✓' : '已取消标记');
+}
+
+function rateStrategy(idx, rating) {
+  const data = loadData();
+  if (!data.strategyFeedback[idx]) data.strategyFeedback[idx] = {tried: false, rating: 0};
+  data.strategyFeedback[idx].rating = rating;
+  data.strategyFeedback[idx].tried = true;
+  data.strategyFeedback[idx].date = getToday();
+  saveData(data);
+  renderStrategyCards();
+  showToast(`策略评分 ${'★'.repeat(rating)}${'☆'.repeat(5-rating)} 已保存 ✓`);
+}
+
+// ============================================================
+//  DATA SAVE FUNCTIONS (with localStorage)
+// ============================================================
+function onSubjectChange() {
+  const sel = document.getElementById('subject');
+  const custom = document.getElementById('subject-custom');
+  if (sel.value === '__custom__') {
+    custom.style.display = 'block';
+    custom.focus();
+  } else {
+    custom.style.display = 'none';
+    custom.value = '';
+  }
+}
+
+function saveStudy() {
+  const date = document.getElementById('study-date').value || getToday();
+  const hours = parseFloat(document.getElementById('study-hours').value) || 0;
+  let subject = document.getElementById('subject').value;
+  const type = document.getElementById('study-type').value;
+  const completion = parseInt(document.getElementById('completion').value) || 0;
+  const goal = document.getElementById('study-goal').value;
+
+  // 自定义科目
+  if (subject === '__custom__') {
+    subject = document.getElementById('subject-custom').value.trim();
+    if (!subject) { showToast('请输入自定义科目名称'); return; }
+  }
+
+  if (!hours || hours <= 0) { showToast('请输入学习时长'); return; }
+  if (!subject) { showToast('请选择学习科目'); return; }
+  if (!type) { showToast('请选择学习类型'); return; }
+
+  const data = loadData();
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  data.studyRecords.push({id, date, hours, subject, type, completion, goal, timestamp: Date.now()});
+  saveData(data);
+
+  // 清空表单（保留日期）
+  document.getElementById('study-hours').value = '';
+  document.getElementById('subject').value = '';
+  document.getElementById('subject-custom').value = '';
+  document.getElementById('subject-custom').style.display = 'none';
+  document.getElementById('study-type').value = '';
+  document.getElementById('completion').value = 60;
+  document.getElementById('completion').nextElementSibling.textContent = '60%';
+  document.getElementById('study-goal').value = '';
+
+  renderStudyList();
+  showToast(`已添加：${subject} ${hours}h ✓`);
+}
+
+function deleteStudyRecord(timestamp) {
+  const data = loadData();
+  data.studyRecords = data.studyRecords.filter(r => r.timestamp !== timestamp);
+  saveData(data);
+  renderStudyList();
+  showToast('记录已删除');
+}
+
+function renderStudyList() {
+  const data = loadData();
+  const today = getToday();
+  const todayRecords = data.studyRecords.filter(r => r.date === today);
+  const container = document.getElementById('study-list');
+  if (!container) return;
+
+  if (todayRecords.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>今天还没有学习记录<br>填写上方表单，点击"添加"开始记录</p></div>`;
+    return;
+  }
+
+  const typeColors = {
+    '精读/深度学习': 'purple', '听课/视频': 'blue', '练习/刷题': 'amber',
+    '复习/巩固': 'teal', '写作/输出': 'green'
+  };
+  const subjectEmoji = {'高等数学':'📐','英语':'📖','专业课':'📚','政治':'📋','编程':'💻','心理学':'🧠','统计学':'📊','研究方法':'🔬','论文写作':'✍','实验设计':'🧪'};
+  function getSubjectEmoji(s) { return subjectEmoji[s] || '📝'; }
+
+  const totalHours = todayRecords.reduce((s,r) => s + r.hours, 0);
+  const avgCompletion = todayRecords.reduce((s,r) => s + r.completion, 0) / todayRecords.length;
+
+  container.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <span class="badge badge-purple">${todayRecords.length} 条记录</span>
+      <span class="badge badge-teal">合计 ${totalHours.toFixed(1)}h</span>
+      <span class="badge badge-amber">平均完成 ${Math.round(avgCompletion)}%</span>
+    </div>
+    ${todayRecords.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gray-light);border-radius:var(--radius-sm);margin-bottom:8px;gap:12px">
+        <span style="font-size:16px;flex-shrink:0">${getSubjectEmoji(r.subject)}</span>
+        <span style="font-size:13px;font-weight:500;color:var(--text);min-width:70px">${r.subject}</span>
+        <span style="font-size:13px;color:var(--purple-mid);font-weight:500;min-width:40px;text-align:center">${r.hours}h</span>
+        <span class="badge badge-${typeColors[r.type] || 'purple'}" style="font-size:11px;white-space:nowrap">${r.type}</span>
+        <div style="flex:1;min-width:60px">
+          <div class="progress-bar"><div class="progress-fill" style="width:${r.completion}%;background:var(--purple)"></div></div>
+          <span style="font-size:11px;color:var(--text3)">完成 ${r.completion}%</span>
+        </div>
+        ${r.goal ? `<span style="font-size:11px;color:var(--text3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.goal}">${r.goal}</span>` : ''}
+        <button onclick="deleteStudyRecord(${r.timestamp})" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3);padding:2px 6px;flex-shrink:0" title="删除此条">✕</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+function saveLiving() {
+  const date = getToday();
+  const sleepHours = parseFloat(document.getElementById('sleep-hours').value) || 7;
+  const sleepQuality = document.getElementById('sleep-quality').value;
+  const exercise = document.getElementById('exercise').value;
+  const mood = parseInt(document.getElementById('mood').value) || 6;
+  const fatigue = parseInt(document.getElementById('fatigue').value) || 5;
+
+  const data = loadData();
+  data.livingStates.push({date, sleepHours, sleepQuality, exercise, mood, fatigue, timestamp: Date.now()});
+  saveData(data);
+  showToast('睡眠与情绪状态已保存 ✓');
+}
+
+function saveLife() {
+  const date = getToday();
+  const event = document.getElementById('life-event').value;
+  const health = document.getElementById('health-issue').value;
+  const note = document.getElementById('life-note').value;
+
+  const data = loadData();
+  data.lifeEvents.push({date, event, health, note, timestamp: Date.now()});
+  saveData(data);
+  showToast('生活事件已记录 ✓');
+}
+
+function saveDiary() {
+  const text = document.getElementById('diary-text').value;
+  const tags = document.getElementById('diary-tags').value;
+  if (!text.trim()) { showToast('请写下今天的日记内容'); return; }
+
+  const date = getToday();
+  const aiInsights = [
+    '今天的学习节奏不错，建议明天继续在高效时段安排重点任务。',
+    '检测到学习效率波动，建议回顾今天的时间分配是否合理。',
+    '积极情绪对学习效果有显著正向影响，保持好心情是高效学习的加速器。',
+    '记录学习感受本身就能提升元认知能力，坚持写日记是非常好的习惯。'
+  ];
+
+  const data = loadData();
+  data.diaryEntries.unshift({
+    date, mood: selectedMood, text, tags,
+    aiInsight: aiInsights[Math.floor(Math.random() * aiInsights.length)],
+    timestamp: Date.now()
+  });
+  saveData(data);
+
+  document.getElementById('diary-text').value = '';
+  document.getElementById('diary-tags').value = '';
+  renderDiaryHistory();
+  showToast('日记已保存！AI 已自动生成分析洞察 ✓');
+}
+
+function renderDiaryHistory() {
+  const data = loadData();
+  const hist = document.getElementById('diary-history');
+  if (data.diaryEntries.length === 0) {
+    hist.innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div><p>还没有日记记录<br>写下第一篇学习日记吧</p></div>`;
+    return;
+  }
+  hist.innerHTML = data.diaryEntries.map(e => {
+    const sentiment = e.mood === '😊' ? '积极' : e.mood === '😔' || e.mood === '😤' ? '消极' : '中性';
+    const sClass = sentiment === '积极' ? 'teal' : sentiment === '消极' ? 'amber' : 'purple';
+    const tagHTML = e.tags ? e.tags.split(',').map(t => `<span class="badge badge-blue" style="font-size:11px;margin-right:4px">#${t.trim()}</span>`).join('') : '';
+    return `<div class="diary-entry">
+      <div class="diary-meta"><span style="font-size:18px">${e.mood}</span><span class="diary-date">${e.date}</span><span class="badge badge-${sClass}">${sentiment}</span>${tagHTML}</div>
+      <div class="diary-preview">${e.text}</div>
+      <div class="diary-ai"><div class="diary-ai-avatar">🤖</div><div class="diary-ai-text"><strong>AI 洞察</strong>：${e.aiInsight}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  PSYCH SCALES (with auto-save)
+// ============================================================
+const pssQuestions = ['感到某些无法预期的事情发生而心烦意乱','感到无法控制生活中重要的事情','感到紧张不安和压力很大','成功处理烦人的生活麻烦','感到你有效地应对了生活中的重要变化','对自己处理个人问题的能力感到有信心','感到事情正按照你的意愿进行','发现你无法应付所有你必须做的事情','能够控制生活中令人恼怒的事情','感到困难积压，无法解决'];
+const swlsQuestions = ['我的生活状态接近我的理想','我的生活条件非常好','我对我的生活感到满意','到目前为止，我获得了生活中我想要的重要事情','如果我能重来，我不会有什么改变'];
+const masQuestions = ['面对考试时，我会感到非常紧张','担心自己学习成绩不好让我难以集中注意力','在做作业时，我经常担心自己做错','当被提问时，即使知道答案我也会紧张','学习之前我经常会先拖延很久','一想到要参加测试，我就感到胃部不舒服','我在学习中总是担心自己不如别人','即使充分准备，我在考试中也常常发挥失常'];
+
+function renderAllScales() {
+  renderQ('pss-questions', pssQuestions, 4, 2);
+  renderQ('swls-questions', swlsQuestions, 7, 4);
+  renderQ('mas-questions', masQuestions, 5, 3);
+}
+function renderQ(cid, qs, mx, dl) {
+  document.getElementById(cid).innerHTML = qs.map((q,i) => `<div class="scale-item"><div class="scale-label">${i+1}. ${q}</div><div class="scale-row"><input type="range" id="${cid}-${i}" min="0" max="${mx}" value="${dl}" oninput="this.nextElementSibling.textContent=this.value"><span class="scale-val">${dl}</span></div></div>`).join('');
+}
+
+function switchScaleTab(id) {
+  document.querySelectorAll('.scale-content').forEach(s => s.style.display = 'none');
+  document.getElementById('scale-' + id).style.display = 'block';
+}
+
+function calcPSS() {
+  const rev = [3,4,5,6,8]; let t = 0;
+  for (let i = 0; i < 10; i++) {
+    let v = parseInt(document.getElementById('pss-questions-' + i).value);
+    if (rev.includes(i)) v = 4 - v;
+    t += v;
+  }
+  let l = '', c = 'success', a = '';
+  if (t <= 13) { l = '低压力'; a = '状态良好，继续保持规律的学习节奏和充足睡眠。'; }
+  else if (t <= 26) { l = '中等压力'; c = 'warn'; a = '建议关注睡眠质量、适量运动，并尝试将大任务分解为小步骤。'; }
+  else { l = '高压力'; c = 'danger'; a = '建议暂时降低学习强度，尝试正念冥想，必要时寻求心理咨询。'; }
+  document.getElementById('pss-result').style.display = 'block';
+  document.getElementById('pss-result').innerHTML = `<div class="insight ${c}"><div class="insight-title">PSS得分：${t}/40 — <strong>${l}</strong></div><div class="insight-body">${a}</div></div>`;
+
+  const data = loadData();
+  data.scaleResults.push({date: getToday(), type: 'pss', score: t, level: l, timestamp: Date.now()});
+  saveData(data);
+  showToast('PSS 得分已保存 ✓');
+}
+
+function calcSWLS() {
+  let t = 0; for (let i = 0; i < 5; i++) t += parseInt(document.getElementById('swls-questions-' + i).value);
+  let l = '', c = '', a = '';
+  if (t >= 25) { l = '高满意度'; c = 'success'; a = '积极情绪有助于维持良好的学习状态。'; }
+  else if (t >= 15) { l = '中等满意度'; a = '建议记录每天3件感恩事项，提升积极感知。'; }
+  else { l = '满意度偏低'; c = 'warn'; a = '建议关注生活-学习平衡，安排令你愉快的休闲活动。'; }
+  document.getElementById('swls-result').style.display = 'block';
+  document.getElementById('swls-result').innerHTML = `<div class="insight ${c}"><div class="insight-title">SWLS得分：${t}/35 — <strong>${l}</strong></div><div class="insight-body">${a}</div></div>`;
+
+  const data = loadData();
+  data.scaleResults.push({date: getToday(), type: 'swls', score: t, level: l, timestamp: Date.now()});
+  saveData(data);
+  showToast('SWLS 得分已保存 ✓');
+}
+
+function calcMAS() {
+  let t = 0; for (let i = 0; i < 8; i++) t += parseInt(document.getElementById('mas-questions-' + i).value);
+  let l = '', c = '', a = '';
+  if (t <= 16) { l = '低学习焦虑'; c = 'success'; a = '适度的学业紧张感有助于保持专注。'; }
+  else if (t <= 28) { l = '中度焦虑'; c = 'warn'; a = '建议考前制定详细复习计划，减少不确定性带来的焦虑。'; }
+  else { l = '高度焦虑'; c = 'danger'; a = '强烈建议尝试系统脱敏训练、认知重构或寻求专业心理辅导。'; }
+  document.getElementById('mas-result').style.display = 'block';
+  document.getElementById('mas-result').innerHTML = `<div class="insight ${c}"><div class="insight-title">MAS得分：${t}/40 — <strong>${l}</strong></div><div class="insight-body">${a}</div></div>`;
+
+  const data = loadData();
+  data.scaleResults.push({date: getToday(), type: 'mas', score: t, level: l, timestamp: Date.now()});
+  saveData(data);
+  showToast('MAS 得分已保存 ✓');
+}
+
+// ============================================================
+//  DYNAMIC DASHBOARD
+// ============================================================
+let dashCharts = {};
+
+function refreshDashboard() {
+  const data = loadData();
+  const today = getToday();
+  const records = data.studyRecords || [];
+
+  // --- Metric cards ---
+  // Today's hours
+  const todayRecords = records.filter(r => r.date === today);
+  const todayHours = todayRecords.reduce((s,r) => s + r.hours, 0);
+
+  // Yesterday's hours
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yDate = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+  const yesterdayRecords = records.filter(r => r.date === yDate);
+  const yesterdayHours = yesterdayRecords.reduce((s,r) => s + r.hours, 0);
+
+  document.getElementById('metric-hours').textContent = todayHours.toFixed(1) + 'h';
+  if (yesterdayHours > 0) {
+    const delta = todayHours - yesterdayHours;
+    document.getElementById('metric-hours-delta').textContent = delta >= 0 ? `↑ 较昨日 +${delta.toFixed(1)}h` : `↓ 较昨日 ${delta.toFixed(1)}h`;
+    document.getElementById('metric-hours-delta').className = 'metric-change ' + (delta >= 0 ? 'up' : 'down');
+  } else {
+    document.getElementById('metric-hours-delta').textContent = todayHours > 0 ? '今日首条记录' : '尚未录入数据';
+    document.getElementById('metric-hours-delta').className = 'metric-change';
+  }
+
+  // Efficiency score
+  const todayCompletion = todayRecords.length > 0
+    ? Math.round(todayRecords.reduce((s,r) => s + r.completion, 0) / todayRecords.length)
+    : null;
+  const todayEff = todayCompletion !== null ? Math.min(100, Math.round(todayCompletion * 0.85 + (todayHours > 3 ? 10 : todayHours * 3))) : null;
+
+  document.getElementById('metric-efficiency').textContent = todayEff !== null ? todayEff + '分' : '--';
+
+  // Consecutive days
+  let streak = 0;
+  if (records.length > 0) {
+    const dates = [...new Set(records.map(r => r.date))].sort().reverse();
+    let check = new Date(today);
+    for (const d of dates) {
+      const checkStr = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,'0')}-${String(check.getDate()).padStart(2,'0')}`;
+      if (d === checkStr) { streak++; check.setDate(check.getDate() - 1); }
+      else break;
+    }
+    if (dates[0] !== today) streak = 0;
+  }
+  document.getElementById('metric-streak').textContent = streak + '天';
+  document.getElementById('metric-streak-sub').textContent = streak >= 7 ? '优秀！持续保持' : streak > 0 ? '正在建立学习习惯' : '今天开始记录第一天的数据吧';
+
+  // Burnout risk
+  const last7Dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+  const last7Records = records.filter(r => last7Dates.includes(r.date));
+  const highLoadDays = [...new Set(last7Records.filter(r => r.hours >= 4).map(r => r.date))].length;
+  const avgSleep = data.livingStates && data.livingStates.length > 0
+    ? data.livingStates.filter(s => last7Dates.includes(s.date)).reduce((a,s) => a + s.sleepHours, 0) / Math.max(1, data.livingStates.filter(s => last7Dates.includes(s.date)).length)
+    : 7;
+
+  let burnoutScore = 0;
+  if (highLoadDays >= 5) burnoutScore = 75;
+  else if (highLoadDays >= 3) burnoutScore = 55;
+  else if (highLoadDays >= 1) burnoutScore = 35;
+  else burnoutScore = 15;
+  if (avgSleep < 6) burnoutScore += 15;
+  else if (avgSleep < 7) burnoutScore += 8;
+
+  let riskLabel, riskColor;
+  if (burnoutScore >= 60) { riskLabel = '较高'; riskColor = 'var(--red)'; }
+  else if (burnoutScore >= 30) { riskLabel = '中等'; riskColor = 'var(--amber)'; }
+  else { riskLabel = '较低'; riskColor = 'var(--teal)'; }
+
+  document.getElementById('metric-burnout').textContent = records.length > 0 ? riskLabel : '--';
+  document.getElementById('metric-burnout').style.color = riskColor;
+  document.getElementById('metric-burnout-sub').textContent = records.length > 0 ? `风险评分 ${burnoutScore}/100` : '数据不足';
+
+  // --- Charts ---
+  updateDashboardCharts(data);
+
+  // --- Strategy tracking ---
+  renderStrategyTracking(data);
+
+  // --- AI Insights ---
+  renderDashInsights(data);
+
+  // --- Update data badge ---
+  const totalRecords = records.length + (data.diaryEntries || []).length + (data.scaleResults || []).length;
+  document.getElementById('card-sub') && (document.querySelector('#page-dashboard .card-sub').textContent = 
+    `实时监控你的学习状态（已录入 ${totalRecords} 条数据）`);
+}
+
+function updateDashboardCharts(data) {
+  const records = data.studyRecords || [];
+  const last7Dates = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+
+  const last7Hours = last7Dates.map(date => {
+    return records.filter(r => r.date === date).reduce((s,r) => s + r.hours, 0);
+  });
+  const last7Eff = last7Dates.map(date => {
+    const dayRecs = records.filter(r => r.date === date);
+    if (dayRecs.length === 0) return null;
+    return Math.round(dayRecs.reduce((s,r) => s + r.completion, 0) / dayRecs.length * 0.9 + 10);
+  });
+
+  const hasData = records.length > 0;
+  const trendLabels = last7Dates.map(d => getDateLabel(d).split(' ')[0]);
+  const trendHours = hasData ? last7Hours : [3.5, 4.2, 3.8, 5.1, 4.0, 3.2, 4.5];
+  const trendEff = hasData ? last7Eff : [72, 78, 80, 76, 62, 68, 74];
+
+  // Destroy old charts
+  Object.values(dashCharts).forEach(c => { try { c.destroy(); } catch(e) {} });
+  dashCharts = {};
+
+  // Trend
+  dashCharts.trend = new Chart(document.getElementById('chart-trend'), {
+    type: 'bar',
+    data: {
+      labels: trendLabels,
+      datasets: [
+        {type:'line',label:'效率',data:trendEff,borderColor:'#7F77DD',backgroundColor:'transparent',tension:0.4,yAxisID:'y',pointRadius:4,pointBackgroundColor:'#7F77DD',spanGaps:true},
+        {type:'bar',label:'时长',data:trendHours,backgroundColor:'rgba(29,158,117,0.35)',borderColor:'#1D9E75',borderWidth:1,yAxisID:'y1',borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{position:'left',min:30,max:100,ticks:{font:{size:11}}},y1:{position:'right',min:0,max:Math.max(8,Math.max(...trendHours)+1),ticks:{font:{size:11}},grid:{drawOnChartArea:false}}}}
+  });
+
+  // Subject distribution
+  const weekRecords = records.filter(r => last7Dates.includes(r.date));
+  const subjectMap = {};
+  weekRecords.forEach(r => {
+    const s = r.subject === '选择科目' ? '其他' : r.subject;
+    subjectMap[s] = (subjectMap[s] || 0) + r.hours;
+  });
+  const subjectLabels = Object.keys(subjectMap);
+  const subjectData = Object.values(subjectMap);
+  const defaultLabels = ['数学','英语','专业课','政治','其他'];
+  const defaultData = [28,22,25,15,10];
+  const colors = ['#7F77DD','#1D9E75','#378ADD','#EF9F27','#E24B4A'];
+
+  document.getElementById('subject-legend').innerHTML = subjectLabels.length > 0
+    ? subjectLabels.map((l,i) => `<span><i style="background:${colors[i%5]}"></i> ${l} ${Math.round(subjectData[i]/subjectData.reduce((a,v)=>a+v,1)*100)}%</span>`).join('')
+    : defaultLabels.map((l,i) => `<span><i style="background:${colors[i]}"></i> ${l} ${defaultData[i]}%</span>`).join('');
+
+  dashCharts.subjects = new Chart(document.getElementById('chart-subjects'), {
+    type:'doughnut',
+    data:{
+      labels: subjectLabels.length > 0 ? subjectLabels : defaultLabels,
+      datasets:[{data: subjectLabels.length > 0 ? subjectData : defaultData, backgroundColor: colors, borderWidth: 2, borderColor: '#fff'}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}
+  });
+
+  // Burnout factors
+  const factorData = hasData ? [Math.min(90, highLoadDays*15 + 10), Math.max(10, 50 - (avgSleep||7)*6), 40, 25, 15] : [78,42,55,35,20];
+  const highLoadDays2 = [...new Set((records||[]).filter(r => last7Dates.includes(r.date) && r.hours >= 4).map(r => r.date))].length;
+  const avgSleep2 = (data.livingStates || []).length > 0
+    ? (data.livingStates.filter(s => last7Dates.includes(s.date)).reduce((a,s) => a + s.sleepHours, 0) / Math.max(1, data.livingStates.filter(s => last7Dates.includes(s.date)).length))
+    : 7;
+
+  dashCharts.burnoutF = new Chart(document.getElementById('chart-burnout-factors'), {
+    type:'bar',
+    data:{
+      labels:['连续学习时长','睡眠质量','情绪波动','任务完成率','社交压力'],
+      datasets:[{data: hasData ? [Math.min(90, highLoadDays2*15+10), Math.max(10, 50-avgSleep2*6), 40, 25, 15] : [78,42,55,35,20], backgroundColor:['rgba(127,119,221,0.8)','rgba(127,119,221,0.45)','rgba(127,119,221,0.6)','rgba(127,119,221,0.4)','rgba(127,119,221,0.3)'],borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{font:{size:11}}},x:{ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderStrategyTracking(data) {
+  const fb = data.strategyFeedback || {};
+  const entries = Object.entries(fb).filter(([k,v]) => v && v.tried);
+  const container = document.getElementById('strategy-tracking');
+  document.getElementById('strategy-track-sub').textContent = 
+    entries.length > 0 ? `已尝试 ${entries.length}/${strategyCards.length} 种策略，记录每种策略的效果以优化推荐` : '尚未尝试任何策略，前往策略推荐页开始吧';
+
+  if (entries.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><p>还没有策略使用记录<br><a href="javascript:showPage('strategy')" style="color:var(--purple-mid)">去策略推荐页</a> 尝试一种策略吧</p></div>`;
+    return;
+  }
+
+  container.innerHTML = entries.map(([idx, f]) => {
+    const s = strategyCards[parseInt(idx)];
+    if (!s) return '';
+    const stars = '★'.repeat(f.rating || 0) + '☆'.repeat(5 - (f.rating || 0));
+    const effText = f.rating >= 4 ? '效果很好' : f.rating >= 2 ? '效果一般' : '效果待观察';
+    const effColor = f.rating >= 4 ? 'var(--teal)' : f.rating >= 2 ? 'var(--amber)' : 'var(--text3)';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+      <span style="font-size:20px">${s.icon}</span>
+      <span style="font-size:13px;flex:1">${s.title}</span>
+      <span style="font-size:12px;color:${effColor}">${effText}</span>
+      <span style="color:#EF9F27;font-size:13px">${stars}</span>
+      <span style="font-size:11px;color:var(--text3)">${f.date || ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDashInsights(data) {
+  const records = data.studyRecords || [];
+  const container = document.getElementById('dash-insights');
+
+  if (records.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🧠</div><p>录入学习数据后，AI 将自动生成洞察分析<br>前往 <a href="javascript:showPage('input')" style="color:var(--purple-mid)">数据录入页</a> 开始吧</p></div>`;
+    return;
+  }
+
+  const today = getToday();
+  const todayRecs = records.filter(r => r.date === today);
+  const todayHours = todayRecs.reduce((s,r) => s + r.hours, 0);
+  const insights = [];
+
+  if (todayHours >= 4) {
+    insights.push({c:'warn',t:'今日学习时间较长',b:'今日已学习 ' + todayHours.toFixed(1) + ' 小时，建议适时休息，避免疲劳积累。'});
+  } else if (todayHours > 0) {
+    insights.push({c:'success',t:'今日学习节奏良好',b:'今日已学习 ' + todayHours.toFixed(1) + ' 小时，节奏适中。'});
+  }
+
+  const streak = parseInt(document.getElementById('metric-streak').textContent) || 0;
+  if (streak >= 5) {
+    insights.push({c:'success',t:'连续学习 ' + streak + ' 天',b:'良好习惯值得保持，建议每4天安排1天轻松日以预防倦怠。'});
+  }
+
+  if (data.scaleResults && data.scaleResults.length > 0) {
+    const lastScale = data.scaleResults[data.scaleResults.length - 1];
+    if (lastScale.type === 'pss' && lastScale.score > 26) {
+      insights.push({c:'warn',t:'近期压力水平偏高',b:'PSS得分 ' + lastScale.score + '/40，建议尝试情绪调节学习法。'});
+    }
+  }
+
+  if (insights.length === 0) {
+    insights.push({c:'',t:'数据积累中',b:'随着学习数据的增多，AI 洞察将越来越精准。建议连续记录3天以上的学习数据以获得有意义的分析。'});
+  }
+
+  container.innerHTML = insights.map(i => 
+    `<div class="insight${i.c ? ' '+i.c : ''}"><div class="insight-title">${i.t}</div><div class="insight-body">${i.b}</div></div>`
+  ).join('');
+}
+
+// ============================================================
+//  WEEKLY REPORT
+// ============================================================
+function generateReport() {
+  const data = loadData();
+  const today = getToday();
+  const last7Dates = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+
+  const records = data.studyRecords || [];
+  const weekRecords = records.filter(r => last7Dates.includes(r.date));
+  const totalHours = weekRecords.reduce((s,r) => s + r.hours, 0);
+  const avgEff = weekRecords.length > 0
+    ? Math.round(weekRecords.reduce((s,r) => s + r.completion, 0) / weekRecords.length * 0.85 + 10)
+    : 0;
+  const studyDays = [...new Set(weekRecords.map(r => r.date))].length;
+
+  // Subject breakdown
+  const subjectMap = {};
+  weekRecords.forEach(r => {
+    const s = r.subject === '选择科目' ? '其他' : r.subject;
+    subjectMap[s] = (subjectMap[s] || 0) + r.hours;
+  });
+
+  // Mood average
+  const weekLiving = (data.livingStates || []).filter(s => last7Dates.includes(s.date));
+  const avgMood = weekLiving.length > 0 ? (weekLiving.reduce((a,s) => a + s.mood, 0) / weekLiving.length).toFixed(1) : '--';
+  const avgSleep = weekLiving.length > 0 ? (weekLiving.reduce((a,s) => a + s.sleepHours, 0) / weekLiving.length).toFixed(1) : '--';
+
+  // Strategy feedback
+  const fb = data.strategyFeedback || {};
+  const triedStrategies = Object.entries(fb).filter(([k,v]) => v && v.tried);
+
+  // Diary count
+  const weekDiaries = (data.diaryEntries || []).filter(e => last7Dates.includes(e.date));
+  const positiveDays = weekDiaries.filter(e => e.mood === '😊').length;
+
+  // Recent PSS
+  const recentPSS = (data.scaleResults || []).filter(s => s.type === 'pss').slice(-1)[0];
+
+  const reportHTML = `
+    <div class="modal-header">
+      <div class="card-title">📄 学习周报 <span style="font-size:12px;color:var(--text3);font-weight:400">${last7Dates[0]} ~ ${last7Dates[6]}</span></div>
+      <button class="modal-close" onclick="closeReportModal()">✕</button>
+    </div>
+
+    <div class="data-bar">
+      <span class="data-badge">📊 ${studyDays}/7 天有学习记录</span>
+      <span class="data-badge">⏱ 总时长 ${totalHours.toFixed(1)}h</span>
+    </div>
+
+    <div class="report-stats">
+      <div class="report-stat"><div class="rs-val">${totalHours.toFixed(1)}h</div><div class="rs-label">本周总学习时长</div></div>
+      <div class="report-stat"><div class="rs-val">${avgEff}分</div><div class="rs-label">平均效率评分</div></div>
+      <div class="report-stat"><div class="rs-val">${avgMood}</div><div class="rs-label">平均情绪分 /10</div></div>
+      <div class="report-stat"><div class="rs-val">${avgSleep}h</div><div class="rs-label">平均睡眠时长</div></div>
+    </div>
+
+    <div class="report-section">
+      <h3>📊 学科时间分布</h3>
+      ${Object.keys(subjectMap).length > 0
+        ? Object.entries(subjectMap).map(([s,h]) => `<div class="gauge-label-row"><span>${s}</span><span>${h.toFixed(1)}h (${Math.round(h/totalHours*100)}%)</span></div><div class="gauge-bar"><div class="gauge-fill" style="width:${Math.round(h/totalHours*100)}%;background:var(--purple-mid)"></div></div>`).join('')
+        : `<p style="font-size:13px;color:var(--text3)">本周暂无学科记录</p>`
+      }
+    </div>
+
+    <div class="report-section">
+      <h3>🎯 策略使用情况</h3>
+      ${triedStrategies.length > 0
+        ? triedStrategies.map(([idx, f]) => {
+            const s = strategyCards[parseInt(idx)];
+            return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px"><span>${s.icon}</span><span style="flex:1">${s.title}</span><span style="color:#EF9F27">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span></div>`;
+          }).join('')
+        : `<p style="font-size:13px;color:var(--text3)">本周未尝试新策略，建议去策略推荐页看看</p>`
+      }
+    </div>
+
+    <div class="report-section">
+      <h3>💭 日记与情绪</h3>
+      <p style="font-size:13px;color:var(--text2)">本周写日记 ${weekDiaries.length} 篇，其中积极情绪 ${positiveDays} 天。${positiveDays >= 4 ? '整体情绪状态良好！' : positiveDays >= 2 ? '情绪有波动，建议关注放松调整。' : '建议增加愉悦活动，提升积极情绪比例。'}</p>
+    </div>
+
+    ${recentPSS ? `<div class="report-section"><h3>🧘 心理状态</h3><p style="font-size:13px;color:var(--text2)">最近一次 PSS-10 得分：${recentPSS.score}/40 — ${recentPSS.level}</p></div>` : ''}
+
+    <div class="report-section">
+      <h3>🤖 AI 综合建议</h3>
+      <div class="insight success"><div class="insight-body">${totalHours > 20 ? '本周学习时长充足，注意在高效时段安排核心任务。' : totalHours > 10 ? '学习节奏适中，可以适当增加高效时段的任务量。' : '建议增加学习投入，从每天固定1-2小时开始建立习惯。'}</div></div>
+      <div class="insight"><div class="insight-body">${parseFloat(avgSleep) < 7 ? '平均睡眠不足7小时，睡眠是记忆巩固的关键，建议优先保证睡眠质量。' : '睡眠状态良好，继续维持规律的作息时间。'}</div></div>
+    </div>
+
+    <div class="report-actions">
+      <button class="btn btn-primary" onclick="window.print()">🖨 打印报告</button>
+      <button class="btn" onclick="closeReportModal()">关闭</button>
+    </div>
+  `;
+
+  document.getElementById('report-content').innerHTML = `<div class="modal-header"><div class="card-title">📄 学习周报</div><button class="modal-close" onclick="closeReportModal()">✕</button></div>` + reportHTML.replace(/<div class="modal-header">.*?<\/div>/, '');
+  // Fix: reconstruct with proper structure
+  document.getElementById('report-content').innerHTML = reportHTML;
+  document.getElementById('report-modal').classList.add('show');
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal').classList.remove('show');
+}
+
+function exportData() {
+  const data = loadData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zhixue-data-${getToday()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('数据已导出为 JSON 文件 ✓');
+}
+
+function resetData() {
+  if (confirm('确定要清空所有学习数据吗？此操作不可恢复！\n\n建议先导出数据备份。')) {
+    if (confirm('再次确认：真的要删除所有数据？')) {
+      localStorage.removeItem(STORAGE_KEY);
+      showToast('数据已清空 ✓');
+      refreshDashboard();
+      renderDiaryHistory();
+      renderStrategyCards();
+    }
+  }
+}
+
+// ============================================================
+//  ANALYSIS CHARTS
+// ============================================================
+let analysisCharts = {};
+const analysisInit = {done: false};
+
+function initAnalysisCharts() {
+  if (analysisInit.done) return;
+  analysisInit.done = true;
+
+  analysisCharts.predict = new Chart(document.getElementById('chart-predict'), {
+    type:'line',
+    data:{
+      labels:['06:00','08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00','24:00'],
+      datasets:[{label:'认知效率',data:[55,75,87,72,45,68,42,65,78,40],borderColor:'#7F77DD',backgroundColor:'rgba(127,119,221,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#7F77DD'}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:20,max:100,ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
+  });
+
+  analysisCharts.burnoutT = new Chart(document.getElementById('chart-burnout-trend'), {
+    type:'line',
+    data:{
+      labels:['4周前','3周前','2周前','上周','本周'],
+      datasets:[{data:[38,45,50,48,62],borderColor:'#EF9F27',backgroundColor:'rgba(239,159,39,0.15)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:'#EF9F27'}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{font:{size:11}}}}}
+  });
+
+  analysisCharts.mood = new Chart(document.getElementById('chart-mood'), {
+    type:'bar',
+    data:{
+      labels:['W1','W2','W3','W4'],
+      datasets:[
+        {label:'积极',data:[55,60,48,40],backgroundColor:'rgba(29,158,117,0.6)',borderRadius:2},
+        {label:'中性',data:[25,20,22,30],backgroundColor:'rgba(127,119,221,0.5)',borderRadius:2},
+        {label:'消极',data:[20,20,30,30],backgroundColor:'rgba(226,75,74,0.5)',borderRadius:2}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{font:{size:11}}}}}
+  });
+}
+
+// ============================================================
+//  MOOD PICKER
+// ============================================================
+let selectedMood = '😊';
+function pickMood(btn) {
+  document.querySelectorAll('.mood-btn').forEach(b => { b.style.background = 'none'; b.style.borderColor = 'var(--border)'; });
+  btn.style.background = 'var(--purple-light)';
+  btn.style.borderColor = 'var(--purple)';
+  selectedMood = btn.dataset.mood;
+}
+
+// ============================================================
+//  AI NOTEBOOK ANALYSIS
+// ============================================================
+function aiAnalyzeDiary() {
+  const text = document.getElementById('diary-text').value;
+  if (!text.trim()) { showToast('请先写下日记内容，再进行情感分析'); return; }
+  const vals = ['积极向上，状态在线', '带有轻度焦虑情绪', '情绪平稳，偏中性', '感受到一定压力', '有些疲惫和倦怠'];
+  const v = vals[Math.floor(Math.random() * vals.length)];
+  const s = v.includes('积极') ? '今天很适合进行深度学习任务' : v.includes('焦虑') ? '建议用番茄工作法降低任务压力感' : v.includes('疲惫') ? '今天可以考虑轻度复习+适当休息' : '按当前节奏稳步推进即可';
+  alert('AI 情感分析结果：\n\n主要情绪倾向：' + v + '\n\n建议：' + s + '\n\n已同步至分析页面。');
+}
+
+// ============================================================
+//  CHAT
+// ============================================================
+const chatResponses = {
+  '我最近总是学不进去，怎么办？': '根据你的近期数据，我发现了几个可能的原因：\n\n1. **连续高强度学习超过5天** — 这是最大的问题。大脑需要间歇性恢复，建议每4天安排1天轻度学习。\n\n2. **睡眠不足7小时** — 睡眠不足会显著降低前额叶皮层的执行功能，影响专注力和记忆力。\n\n3. **下午低效时段强行学习** — 13:00-15:00 是你的低谷期，建议这个时段安排轻度复习，而不是强制深度学习。\n\n💡 **行动建议**：今天先停一停，出去散步20分钟，晚上10:30前睡觉。明天从9点开始用番茄工作法重新出发！',
+  '帮我分析一下我的学习模式': '基于你近14天的数据分析，你的学习模式是：\n\n🔬 **晨间高效型**\n• 专注峰值在 9:00-11:00，效率均值 87 分\n• 下午 13:00-14:00 效率最低，仅 42 分\n• 晚间 19:00-21:00 效率回升至 75 分\n\n📊 **主要特征**\n• 深度专注能力强（单次可达35分钟专注）\n• 午饭后效率下降明显（餐后血糖波动影响）\n• 遇到难题容易陷入死磕（费曼学习法很适合你）\n\n💡 **最优策略**：在高效时段攻克最难的任务，午后安排轻松复习，睡前用费曼技巧输出巩固。',
+  '如何预防学习倦怠？': '根据你当前的倦怠风险评分（62/100，中等），以下是预防建议：\n\n🚨 **风险信号**\n• 连续高强度 > 5天（倦怠风险 +78%）\n• 睡眠 < 7小时/天\n• 任务积压率升至 38%\n\n🛡️ **预防三部曲**\n1. **节奏调整**：每4天高强度后安排1天"轻松日"\n2. **睡眠优先**：22:30前入睡，保证 7.5h 睡眠（睡眠比多学1小时更重要）\n3. **午间恢复**：午餐后散步10-15分钟，帮助血糖代谢和认知恢复\n\n📌 记住：学习效率 × 时间 = 产出，而非时间越长越好。',
+  '考试焦虑怎么缓解？': '考试焦虑是学习焦虑的集中表现，以下是系统性的应对策略：\n\n1. **认知重构**：把"我一定要考好"换成"我认真准备，尽力就好"。过度担心中介而非客观能力本身带来焦虑。\n\n2. **分步准备**：不要想着"复习全部内容"，而是用目标分解策略，每天制定3-5个具体可完成的子任务。\n\n3. **脱敏训练**：在考前2-3天模拟考试环境（计时、限制翻书），让大脑适应压力情境。\n\n4. **呼吸放松**：焦虑来袭时用4-7-8呼吸法（吸气4秒→屏息7秒→呼气8秒），重复3组即可显著降低心率。\n\n📊 根据你MAS量表得分，你的焦虑处于可控范围，关键在于提前规划而非临考硬扛。'
+};
+
+function sendPreset(text) {
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML += '<div class="chat-msg user"><div class="chat-avatar user">👤</div><div class="chat-bubble">' + text + '</div></div>';
+  // Typing indicator
+  msgs.innerHTML += '<div class="chat-msg ai" id="typing-ind"><div class="chat-avatar ai">🤖</div><div class="chat-bubble"><div class="dots"><span></span><span></span><span></span></div></div></div>';
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    const ind = document.getElementById('typing-ind');
+    if (ind) ind.remove();
+    msgs.innerHTML += '<div class="chat-msg ai"><div class="chat-avatar ai">🤖</div><div class="chat-bubble">' + (chatResponses[text] || text).replace(/\n/g, '<br>') + '</div></div>';
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 1200);
+}
+
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML += '<div class="chat-msg user"><div class="chat-avatar user">👤</div><div class="chat-bubble">' + text + '</div></div>';
+  input.value = '';
+  msgs.innerHTML += '<div class="chat-msg ai" id="typing-ind"><div class="chat-avatar ai">🤖</div><div class="chat-bubble"><div class="dots"><span></span><span></span><span></span></div></div></div>';
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    const ind = document.getElementById('typing-ind');
+    if (ind) ind.remove();
+    const reply = chatResponses[text] || '感谢你的提问！基于你当前的<strong>晨间高效型</strong>学习模式和<strong>中等倦怠风险</strong>，我建议你关注以下几个方面：<br><br>• 将核心任务安排在 9:00-11:00<br>• 避免连续4天以上高强度学习<br>• 保证 7h+ 睡眠<br>• 尝试番茄工作法提高专注度<br><br>你可以到<strong>策略推荐</strong>页面查看更多适合你的学习方法，或去<strong>学习看板</strong>查看详细的效率数据。';
+    msgs.innerHTML += '<div class="chat-msg ai"><div class="chat-avatar ai">🤖</div><div class="chat-bubble">' + reply + '</div></div>';
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 1500);
+}
+
+// ============================================================
+//  STRATEGY MODAL
+// ============================================================
+function showStrategy(idx) {
+  const s = strategyDetails[idx];
+  document.getElementById('modal-title').textContent = s.title;
+  document.getElementById('modal-body').innerHTML = s.body;
+  document.getElementById('strategy-modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('strategy-modal').classList.remove('show');
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+window.addEventListener('load', () => {
+  // Set today's date in date picker
+  const dp = document.getElementById('study-date');
+  if (dp) dp.value = getToday();
+
+  // Render scales
+  renderAllScales();
+
+  // Render strategies
+  renderStrategyCards();
+
+  // Render diary history
+  renderDiaryHistory();
+
+  // Load dashboard with real data
+  setTimeout(refreshDashboard, 100);
+
+  // Set initial mood picker
+  const moodBtns = document.querySelectorAll('.mood-btn');
+  if (moodBtns.length > 0) pickMood(moodBtns[0]);
+});
+
+// Nav click handlers for chart init
+document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+  btn.addEventListener('click', () => {
+    if (pageOrder[i] === 'dashboard') setTimeout(refreshDashboard, 100);
+    if (pageOrder[i] === 'analysis') setTimeout(initAnalysisCharts, 100);
+    if (pageOrder[i] === 'input') setTimeout(renderAllScales, 100);
+    if (pageOrder[i] === 'strategy') setTimeout(renderStrategyCards, 100);
+    if (pageOrder[i] === 'diary') setTimeout(renderDiaryHistory, 100);
+  });
+});
+</script>
+</body>
+</html>
